@@ -6,6 +6,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AlertDialog;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -137,7 +138,7 @@ public abstract class BaseSingleFragmentActivity extends BaseFragmentActivity im
             case FLYIN_ERROR:
             case FLYIN_WARNING:
             case FLYIN_INFO:
-                this.showInfoMessage(message);
+                this.showErrorMessage("", message);
                 break;
             case ERROR:
             case WARNING:
@@ -147,6 +148,8 @@ public abstract class BaseSingleFragmentActivity extends BaseFragmentActivity im
             case EMPTY:
                 this.hideMessageInSitu();
                 break;
+            case PERSISTENT_ERROR:
+                this.showErrorDialog(message);
         }
     }
 
@@ -163,4 +166,10 @@ public abstract class BaseSingleFragmentActivity extends BaseFragmentActivity im
         }
     }
 
+    private void showErrorDialog(String message) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(message)
+                .setPositiveButton(R.string.label_ok, null);
+        builder.create().show();
+    }
 }

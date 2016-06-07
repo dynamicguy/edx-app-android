@@ -8,6 +8,7 @@ import org.edx.mobile.http.HttpConnectivityException;
 import org.edx.mobile.http.HttpResponseStatusException;
 import org.edx.mobile.logger.Logger;
 import org.edx.mobile.util.NetworkUtil;
+import org.edx.mobile.view.common.MessageType;
 
 import java.net.HttpURLConnection;
 
@@ -16,31 +17,43 @@ public enum ErrorUtils {
 
     protected static final Logger logger = new Logger(ErrorUtils.class.getName());
 
+    public static class Error {
+        public MessageType type;
+        public String message;
+    }
+
     @NonNull
     public static String getErrorMessage(@NonNull Throwable ex, @NonNull Context context) {
-        String errorMessage = null;
+        return getError(ex, context).message;
+    }
+
+    @NonNull
+    public static Error getError(@NonNull Throwable ex, @NonNull Context context) {
+        Error errorObj = new Error();
+        errorObj.type = MessageType.FLYIN_ERROR;
         if (ex instanceof HttpConnectivityException) {
             if (NetworkUtil.isConnected(context)) {
-                errorMessage = context.getString(R.string.network_connected_error);
+                errorObj.message = context.getString(R.string.network_connected_error);
             } else {
-                errorMessage = context.getString(R.string.reset_no_network_message);
+                errorObj.message = context.getString(R.string.reset_no_network_message);
             }
         } else if (ex instanceof HttpResponseStatusException) {
             final int status = ((HttpResponseStatusException) ex).getStatusCode();
             switch (status) {
                 case HttpURLConnection.HTTP_UNAVAILABLE:
-                    errorMessage = context.getString(R.string.network_service_unavailable);
+                    errorObj.message = context.getString(R.string.network_service_unavailable);
                     break;
                 case HttpURLConnection.HTTP_NOT_FOUND:
                 case HttpURLConnection.HTTP_INTERNAL_ERROR:
-                    errorMessage = context.getString(R.string.action_not_completed);
+                    errorObj.message = context.getString(R.string.action_not_completed);
+                    errorObj.type = MessageType.PERSISTENT_ERROR;
                     break;
             }
         }
-        if (null == errorMessage) {
+        if (null == errorObj.message) {
             logger.error(ex, true /* Submit crash report since this is an unknown type of error */);
-            errorMessage = context.getString(R.string.error_unknown);
+            errorObj.message = context.getString(R.string.error_unknown);
         }
-        return errorMessage;
+        return errorObj;
     }
 }
