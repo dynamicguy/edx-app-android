@@ -8,11 +8,8 @@ import android.widget.ProgressBar;
 
 import com.google.inject.Inject;
 
-import org.edx.mobile.R;
 import org.edx.mobile.core.IEdxEnvironment;
-import org.edx.mobile.http.RetroHttpException;
 import org.edx.mobile.logger.Logger;
-import org.edx.mobile.util.NetworkUtil;
 import org.edx.mobile.util.images.ErrorUtils;
 import org.edx.mobile.view.common.MessageType;
 import org.edx.mobile.view.common.TaskMessageCallback;
@@ -21,7 +18,6 @@ import org.edx.mobile.view.common.TaskProgressCallback;
 
 import java.lang.ref.WeakReference;
 
-import retrofit.RetrofitError;
 import roboguice.util.RoboAsyncTask;
 
 public abstract class Task<T> extends RoboAsyncTask<T> {
@@ -49,6 +45,7 @@ public abstract class Task<T> extends RoboAsyncTask<T> {
 
     public void setProgressDialog(ProgressBar progressBar) {
         this.progressBar = progressBar;
+        this.progressCallback = null;
     }
 
     public void setTaskProcessCallback(@Nullable TaskProcessCallback callback) {

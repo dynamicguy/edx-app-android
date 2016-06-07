@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -43,6 +44,9 @@ import roboguice.inject.InjectView;
 public class CourseDiscussionPostsThreadFragment extends CourseDiscussionPostsBaseFragment {
     public static final String ARG_DISCUSSION_HAS_TOPIC_NAME = "discussion_has_topic_name";
 
+    @InjectView(R.id.spinners_container)
+    private ViewGroup spinnersContainerLayout;
+
     @InjectView(R.id.discussion_posts_filter_spinner)
     private Spinner discussionPostsFilterSpinner;
 
@@ -57,6 +61,9 @@ public class CourseDiscussionPostsThreadFragment extends CourseDiscussionPostsBa
 
     @InjectView(R.id.center_message_box)
     private TextView centerMessageBox;
+
+    @InjectView(R.id.loading_indicator)
+    private ProgressBar loadingIndicator;
 
     @InjectExtra(value = Router.EXTRA_DISCUSSION_TOPIC, optional = true)
     private DiscussionTopic discussionTopic;
@@ -116,7 +123,7 @@ public class CourseDiscussionPostsThreadFragment extends CourseDiscussionPostsBa
                     }
                 }
             };
-            getTopicsTask.setProgressCallback(null);
+            getTopicsTask.setProgressDialog(loadingIndicator);
             getTopicsTask.execute();
         } else {
             getActivity().setTitle(discussionTopic.getName());
@@ -291,7 +298,9 @@ public class CourseDiscussionPostsThreadFragment extends CourseDiscussionPostsBa
             // move the ListView's scroll to that newly added post's position
             discussionPostsListView.setSelection(i);
             // In case this is the first addition, we need to hide the no-item-view
-            setNoResultView(null);
+            setScreenStateUponResult(null);
+            // And show the filter and sort spinners
+            spinnersContainerLayout.setVisibility(View.VISIBLE);
         }
     }
 
@@ -311,6 +320,7 @@ public class CourseDiscussionPostsThreadFragment extends CourseDiscussionPostsBa
 
     private void clearListAndLoadFirstPage() {
         nextPage = 1;
+        discussionPostsListView.setVisibility(View.INVISIBLE);
         discussionPostsAdapter.setVoteCountsEnabled(postsSort == DiscussionPostsSort.VOTE_COUNT);
         controller.reset();
     }
@@ -327,11 +337,11 @@ public class CourseDiscussionPostsThreadFragment extends CourseDiscussionPostsBa
                 ++nextPage;
                 callback.onPageLoaded(threadsPage);
                 if (discussionTopic.isAllType()) {
-                    setNoResultView(EmptyQueryResultsFor.COURSE);
+                    setScreenStateUponResult(EmptyQueryResultsFor.COURSE);
                 } else if (discussionTopic.isFollowingType()) {
-                    setNoResultView(EmptyQueryResultsFor.FOLLOWING);
+                    setScreenStateUponResult(EmptyQueryResultsFor.FOLLOWING);
                 } else {
-                    setNoResultView(EmptyQueryResultsFor.CATEGORY);
+                    setScreenStateUponResult(EmptyQueryResultsFor.CATEGORY);
                 }
             }
 
@@ -346,11 +356,17 @@ public class CourseDiscussionPostsThreadFragment extends CourseDiscussionPostsBa
                 nextPage = 1;
             }
         };
-        getThreadListTask.setProgressCallback(null);
+        // Initially we need to show the spinner at the center of the screen. After that the
+        // ListView will start showing a footer-based loading indicator.
+        if (nextPage > 1 || callback.isRefreshingSilently()) {
+            getThreadListTask.setProgressCallback(null);
+        } else {
+            getThreadListTask.setProgressDialog(loadingIndicator);
+        }
         getThreadListTask.execute();
     }
 
-    private void setNoResultView(@Nullable EmptyQueryResultsFor query) {
+    private void setScreenStateUponResult(@Nullable EmptyQueryResultsFor query) {
         if (discussionPostsAdapter.getCount() == 0) {
             String resultsText = "";
             boolean isAllPostsFilter = (postsFilter == DiscussionPostsFilter.ALL);
@@ -375,9 +391,10 @@ public class CourseDiscussionPostsThreadFragment extends CourseDiscussionPostsBa
 
             centerMessageBox.setText(resultsText);
             centerMessageBox.setVisibility(View.VISIBLE);
-            discussionPostsListView.setVisibility(View.GONE);
+            discussionPostsListView.setVisibility(View.INVISIBLE);
         } else {
             centerMessageBox.setVisibility(View.GONE);
+            spinnersContainerLayout.setVisibility(View.VISIBLE);
             discussionPostsListView.setVisibility(View.VISIBLE);
         }
     }
