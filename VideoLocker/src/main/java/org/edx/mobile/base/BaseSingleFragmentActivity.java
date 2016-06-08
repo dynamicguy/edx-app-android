@@ -148,7 +148,7 @@ public abstract class BaseSingleFragmentActivity extends BaseFragmentActivity im
             case EMPTY:
                 this.hideMessageInSitu();
                 break;
-            case PERSISTENT_ERROR:
+            case DIALOG:
                 this.showErrorDialog(message);
         }
     }
@@ -169,7 +169,7 @@ public abstract class BaseSingleFragmentActivity extends BaseFragmentActivity im
     private void showErrorDialog(String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(message)
-                .setPositiveButton(R.string.label_ok, null);
-        builder.create().show();
+                .setPositiveButton(R.string.label_ok, null)
+                .create().show();
     }
 }
